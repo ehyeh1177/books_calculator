@@ -217,6 +217,10 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 深度防呆警告：內深不足以放下書本(直立或橫放)時顯示 -->
+                    <div id="depth-warning" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg text-sm md:text-base font-semibold text-red-700 space-y-1.5">
+                    </div>
                 </div>
 
                 <!-- 2D 櫃位剖面視覺化 -->
@@ -336,6 +340,32 @@
             const gridH = parseFloat(document.getElementById('input-cab-height').value) || 32;
             const cabDepth = parseFloat(document.getElementById('input-cab-depth').value) || 39;
 
+            // ===== 深度防呆檢查 =====
+            // 直立擺放（書背朝外）時，需要的深度就是書本的寬度(bookWidth)
+            const standDepthOK = cabDepth >= bookWidth;
+            // 橫放躺平時，需要的深度是書本的高度(bookHeight)
+            const flatDepthOK = cabDepth >= bookHeight;
+
+            const warningBox = document.getElementById('depth-warning');
+            const depthInput = document.getElementById('input-cab-depth');
+            let warningMsgs = [];
+            if (!standDepthOK) {
+                const overflow = (bookWidth - cabDepth).toFixed(1);
+                warningMsgs.push(`⚠️ 內深 ${cabDepth}cm 小於書本寬度 ${bookWidth}cm，直立擺放時書本會凸出櫃體外約 ${overflow}cm（擺法1、2、3皆受影響）。`);
+            }
+            if (!flatDepthOK) {
+                const overflow = (bookHeight - cabDepth).toFixed(1);
+                warningMsgs.push(`⚠️ 內深 ${cabDepth}cm 小於書本高度 ${bookHeight}cm，橫放躺平時書本會凸出櫃體外約 ${overflow}cm（擺法3上方橫壓、擺法4全平放皆受影響）。`);
+            }
+            if (warningMsgs.length > 0) {
+                warningBox.innerHTML = warningMsgs.map(m => `<p>${m}</p>`).join('');
+                warningBox.classList.remove('hidden');
+                depthInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+            } else {
+                warningBox.classList.add('hidden');
+                depthInput.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+            }
+
             // 更新視覺化標籤的尺寸字樣
             document.getElementById('visual-cab-dims').textContent = `${gridW.toFixed(0)} × ${gridH.toFixed(0)}`;
 
@@ -356,6 +386,8 @@
             const standingPerRow = Math.floor(gridW / bookThickness);
 
             // 判斷櫃深可容納直立幾排
+            // 注意：若 standDepthOK 為 false，代表連1排的深度都不夠，
+            // 這裡仍以「至少1排」計算容量供參考，但上方已顯示紅色警告告知會凸出櫃外
             const standingRows = Math.floor(cabDepth / bookWidth);
             const activeStandingRows = standingRows > 0 ? standingRows : 1; // 至少1排
 
@@ -376,7 +408,7 @@
                 topStackHeight = Math.floor(gapH / bookThickness);
                 // 橫躺時，前後深度需大於書本的高度(長度)
                 topStackRows = Math.floor(cabDepth / bookHeight);
-                if (topStackRows === 0) topStackRows = 1; // 深度不夠就只能橫躺1排
+                if (topStackRows === 0) topStackRows = 1; // 深度不夠橫躺1本的長度，仍以1排計算，但上方會顯示紅色警告
 
                 // 寬度能放幾疊橫躺書？書本寬度是 bookWidth
                 const stacksWide = Math.floor(gridW / bookWidth);
