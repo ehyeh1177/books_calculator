@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>漫畫書櫃多維擺法空間估算器</title>
+    <title>書櫃擺法空間估算</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -24,10 +24,10 @@
     <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
         <header class="bg-gradient-to-r from-amber-700 to-amber-900 text-white p-6">
             <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3">
-                📚 漫畫書櫃多維擺法空間估算器 (自訂尺寸升級版)
+                📚 書櫃擺法空間估算
             </h1>
             <p class="text-amber-100 mt-2 text-sm md:text-base">
-                現在支援完全自訂內格「寬、高、深」，可根據任意櫃體空間，即時模擬剖面與本數極致量化。
+                支援完全自訂內格「寬、高、深」，可根據任意櫃體空間，即時模擬剖面與本數極致量化。
             </p>
         </header>
 
@@ -42,7 +42,7 @@
 
                     <!-- 漫畫規格選擇 -->
                     <div>
-                        <label class="block text-sm font-semibold text-slate-600 mb-2">1. 選擇漫畫規格</label>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">1. 選擇書本規格</label>
                         <div class="grid grid-cols-3 gap-2">
                             <button id="btn-size-36k" onclick="setSize(11.5, 17.7, 1.5, '36k')" class="py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-amber-50 border-amber-500 text-amber-800 shadow-sm">
                                 少年漫(36K)<br><span class="text-[10px] opacity-75">11.5 × 17.7 × 1.5cm</span>
@@ -520,3 +520,4 @@
         }
     </script>
 </body>
+</html>
