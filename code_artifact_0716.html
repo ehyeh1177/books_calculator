@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漫畫書櫃多維擺法空間估算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .wood-texture {
+            background-color: #f7efe5;
+            background-image: radial-gradient(rgba(139, 90, 43, 0.05) 1px, transparent 0),
+                              radial-gradient(rgba(139, 90, 43, 0.05) 1px, transparent 0);
+            background-size: 8px 8px;
+            background-position: 0 0, 4px 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+        <header class="bg-gradient-to-r from-amber-700 to-amber-900 text-white p-6">
+            <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3">
+                📚 漫畫書櫃多維擺法空間估算器 (自訂尺寸升級版)
+            </h1>
+            <p class="text-amber-100 mt-2 text-sm md:text-base">
+                現在支援完全自訂內格「寬、高、深」，可根據任意櫃體空間，即時模擬剖面與本數極致量化。
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-8">
+            
+            <!-- 左側：輸入控制台 (5格寬度) -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200/60 space-y-5">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2 border-b pb-2">
+                        ⚙️ 參數設定
+                    </h2>
+
+                    <!-- 漫畫規格選擇 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">1. 選擇漫畫規格</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button id="btn-size-36k" onclick="setSize(11.5, 17.7, 1.5, '36k')" class="py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-amber-50 border-amber-500 text-amber-800 shadow-sm">
+                                少年漫(36K)<br><span class="text-[10px] opacity-75">11.5 × 17.7 × 1.5cm</span>
+                            </button>
+                            <button id="btn-size-25k" onclick="setSize(13.0, 18.2, 1.6, '25k')" class="py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-white border-slate-200 text-slate-600 hover:border-slate-300">
+                                青年漫(25K)<br><span class="text-[10px] opacity-75">13.0 × 18.2 × 1.6cm</span>
+                            </button>
+                            <button id="btn-size-custom" onclick="setSize(14.8, 21.0, 1.8, 'custom')" class="py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-white border-slate-200 text-slate-600 hover:border-slate-300">
+                                典藏/A5大本<br><span class="text-[10px] opacity-75">14.8 × 21.0 × 1.8cm</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 書本尺寸滑桿微調 -->
+                    <div class="space-y-3 pt-2 bg-white p-3 rounded-lg border border-slate-100">
+                        <span class="text-xs font-bold text-slate-500 block">📐 書本詳細尺寸調整：</span>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>書本厚度 (cm)</span>
+                                <span id="val-thickness" class="font-semibold text-slate-700">1.5</span>
+                            </div>
+                            <input type="range" id="input-thickness" min="0.8" max="3.0" step="0.1" value="1.5" oninput="updateCustom()" class="w-full accent-amber-700">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>書本高度 (cm)</span>
+                                <span id="val-height" class="font-semibold text-slate-700">17.7</span>
+                            </div>
+                            <input type="range" id="input-height" min="15.0" max="23.0" step="0.1" value="17.7" oninput="updateCustom()" class="w-full accent-amber-700">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>書本寬度/深度 (cm)</span>
+                                <span id="val-width" class="font-semibold text-slate-700">11.5</span>
+                            </div>
+                            <input type="range" id="input-width" min="10.0" max="16.0" step="0.1" value="11.5" oninput="updateCustom()" class="w-full accent-amber-700">
+                        </div>
+                    </div>
+
+                    <!-- 手動鍵入櫃位尺寸 (取代原按鈕深度) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">2. 櫃子內格尺寸 (公分)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-1">內寬 (cm)</label>
+                                <input type="number" id="input-cab-width" value="32" step="0.5" min="10" max="100" oninput="calculateCapacity()" class="w-full text-center py-1.5 border rounded-lg text-sm bg-white border-slate-200 font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-1">內高 (cm)</label>
+                                <input type="number" id="input-cab-height" value="32" step="0.5" min="10" max="100" oninput="calculateCapacity()" class="w-full text-center py-1.5 border rounded-lg text-sm bg-white border-slate-200 font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-1">內深 (cm)</label>
+                                <input type="number" id="input-cab-depth" value="39" step="0.5" min="10" max="100" oninput="calculateCapacity()" class="w-full text-center py-1.5 border rounded-lg text-sm bg-white border-slate-200 font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                            </div>
+                        </div>
+                        <!-- 常見規格快速一鍵填入 -->
+                        <div class="flex gap-1.5 mt-2.5 overflow-x-auto pb-1">
+                            <button type="button" onclick="setCabDims(32, 32, 39)" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap">IKEA Kallax (32×32×39)</button>
+                            <button type="button" onclick="setCabDims(27, 27, 29)" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap">典型三格櫃 (27×27×29)</button>
+                            <button type="button" onclick="setCabDims(40, 30, 40)" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap">大深櫃雙排 (40×30×40)</button>
+                        </div>
+                    </div>
+
+                    <!-- 櫃體格數 -->
+                    <div>
+                        <div class="flex justify-between text-sm font-semibold text-slate-600 mb-1">
+                            <span>3. 櫃體總格數</span>
+                            <span id="val-grids" class="font-bold text-amber-800">4 格</span>
+                        </div>
+                        <input type="range" id="input-grids" min="1" max="16" step="1" value="4" oninput="calculateCapacity()" class="w-full accent-amber-700">
+                    </div>
+
+                </div>
+
+                <!-- 承重警告與建議 -->
+                <div class="bg-amber-50 border-l-4 border-amber-600 p-4 rounded-r-lg text-xs text-amber-900 space-y-1">
+                    <p class="font-bold flex items-center gap-1">⚠️ 重量安全提醒：</p>
+                    <p>單本漫畫約 150～200 克。若單格塞滿 60 本以上，承重會高達 <span id="weight-estimation" class="font-bold text-amber-800">10</span> 公斤！請務必確認層板結構安全，避免出現「微笑曲線」。</p>
+                </div>
+            </div>
+
+            <!-- 右側：數據展示與剖面視覺化 (7格寬度) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- 大本數看板 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-5 rounded-2xl shadow-md flex flex-col justify-between">
+                        <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">單格最大容量</span>
+                        <div class="my-2">
+                            <span id="display-single-cap" class="text-4xl md:text-5xl font-extrabold text-amber-400">78</span>
+                            <span class="text-sm ml-1 text-slate-300">本</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400">以目前所選的收納擺法估算</span>
+                    </div>
+                    <div class="bg-gradient-to-br from-amber-700 to-amber-800 text-white p-5 rounded-2xl shadow-md flex flex-col justify-between">
+                        <span class="text-xs uppercase tracking-wider text-amber-100 font-medium">整座櫃總容量 (<span id="grid-count-tag">4</span>格)</span>
+                        <div class="my-2">
+                            <span id="display-total-cap" class="text-4xl md:text-5xl font-extrabold">312</span>
+                            <span class="text-sm ml-1 text-amber-100">本</span>
+                        </div>
+                        <span class="text-[10px] text-amber-200">最大疊放狀態總計</span>
+                    </div>
+                </div>
+
+                <!-- 擺法列表 -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                    <h3 class="text-base font-bold text-slate-700 flex items-center gap-2">
+                        📋 4種收納擺法大比拼 (點擊可切換下方剖面模擬)
+                    </h3>
+
+                    <div class="space-y-3">
+                        <!-- 擺法 1 -->
+                        <div id="row-method-1" onclick="selectMethod(1)" class="p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between hover:bg-slate-50 border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">1</span>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800">單排直立擺放 (最直覺好拿)</h4>
+                                    <p class="text-[11px] text-slate-500">最透氣、好抽拿，完全不擋書脊</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="method-1-count" class="text-lg font-extrabold text-slate-700">21 本/格</span>
+                                <p id="method-1-total" class="text-[10px] text-slate-400">總計 84 本</p>
+                            </div>
+                        </div>
+
+                        <!-- 擺法 2 -->
+                        <div id="row-method-2" onclick="selectMethod(2)" class="p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between hover:bg-slate-50 border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">2</span>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800">前後多排直立 (主流高效率)</h4>
+                                    <p id="desc-method-2" class="text-[11px] text-slate-500">完美利用深度，後排建議用小物墊高</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="method-2-count" class="text-lg font-extrabold text-slate-700">42 本/格</span>
+                                <p id="method-2-total" class="text-[10px] text-slate-400">總計 168 本</p>
+                            </div>
+                        </div>
+
+                        <!-- 擺法 3 -->
+                        <div id="row-method-3" onclick="selectMethod(3)" class="p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between hover:bg-slate-50 border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">3</span>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                                        多排直立 + 上方橫壓 <span class="bg-amber-600 text-white text-[9px] px-1 rounded">最高密度</span>
+                                    </h4>
+                                    <p id="desc-method-3" class="text-[11px] text-slate-500">榨乾高度，上方剩餘空間橫放躺平壓實</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="method-3-count" class="text-lg font-extrabold text-slate-700">78 本/格</span>
+                                <p id="method-3-total" class="text-[10px] text-slate-400">總計 312 本</p>
+                            </div>
+                        </div>
+
+                        <!-- 擺法 4 -->
+                        <div id="row-method-4" onclick="selectMethod(4)" class="p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between hover:bg-slate-50 border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">4</span>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800">全橫疊平放 (適合退坑儲藏)</h4>
+                                    <p id="desc-method-4" class="text-[11px] text-slate-500">擺成豆腐塊，不便拿取但重心最穩固</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="method-4-count" class="text-lg font-extrabold text-slate-700">84 本/格</span>
+                                <p id="method-4-total" class="text-[10px] text-slate-400">總計 336 本</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2D 櫃位剖面視覺化 -->
+                <div class="bg-slate-100 rounded-xl p-5 border border-slate-200 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">🗃️ <span id="visual-cab-dims" class="text-amber-800 font-bold">32 × 32</span> cm 單格剖面視覺化</span>
+                        <span id="visual-tag" class="text-xs font-semibold bg-white px-2 py-0.5 rounded shadow-sm text-slate-600">當前擺法 3</span>
+                    </div>
+
+                    <div class="flex justify-center items-center py-6 bg-slate-200/50 rounded-lg min-h-[300px]">
+                        <!-- 虛擬櫃子，其寬高、比例會在 JS 中根據 input 進行即時等比例變更 -->
+                        <div id="visual-box" class="border-[6px] border-amber-900 rounded-md bg-[#fdfaf7] wood-texture relative flex flex-col justify-end p-1 shadow-inner transition-all duration-300" style="width: 256px; height: 256px;">
+                            
+                            <!-- 頂部剩餘高度尺規 -->
+                            <div id="ruler-top" class="absolute left-1/2 -translate-x-1/2 top-2 bg-slate-800/80 text-[10px] text-white py-0.5 px-2 rounded-full z-10 hidden">
+                                頂部尚有剩餘空間
+                            </div>
+
+                            <!-- 頂部橫疊區 (擺法3, 4會渲染) -->
+                            <div id="box-top-stacks" class="w-full absolute left-0 top-0 p-1 flex justify-center gap-4 transition-all duration-300">
+                                <!-- JS 動態插入 -->
+                            </div>
+
+                            <!-- 下半部直立書本區 (擺法1, 2, 3會渲染) -->
+                            <div id="box-standing-books" class="w-full h-auto flex items-end justify-start overflow-hidden px-1 transition-all duration-300">
+                                <!-- JS 動態插入 -->
+                            </div>
+
+                        </div>
+                    </div>
+                    <p class="text-center text-[11px] text-slate-500">※ 此圖模擬櫃體正前方剖面。若啟用多排，深度方向等同有同等數量的藏書。</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全域變數定義
+        let bookThickness = 1.5;
+        let bookHeight = 17.7;
+        let bookWidth = 11.5;
+        let currentMethod = 3; // 預設使用最強擺法3
+
+        // 初始化
+        window.onload = function() {
+            calculateCapacity();
+        }
+
+        // 快速自訂櫃體尺寸
+        function setCabDims(w, h, d) {
+            document.getElementById('input-cab-width').value = w;
+            document.getElementById('input-cab-height').value = h;
+            document.getElementById('input-cab-depth').value = d;
+            calculateCapacity();
+        }
+
+        // 切換預設規格
+        function setSize(w, h, t, type) {
+            bookWidth = w;
+            bookHeight = h;
+            bookThickness = t;
+
+            document.getElementById('input-thickness').value = t;
+            document.getElementById('input-height').value = h;
+            document.getElementById('input-width').value = w;
+
+            // 切換按鈕樣式
+            const btnTypes = ['36k', '25k', 'custom'];
+            btnTypes.forEach(tName => {
+                const btn = document.getElementById(`btn-size-${tName}`);
+                if (tName === type) {
+                    btn.className = "py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-amber-50 border-amber-500 text-amber-800 shadow-sm";
+                } else {
+                    btn.className = "py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-white border-slate-200 text-slate-600 hover:border-slate-300";
+                }
+            });
+
+            calculateCapacity();
+        }
+
+        // 更新自訂滑桿
+        function updateCustom() {
+            bookThickness = parseFloat(document.getElementById('input-thickness').value);
+            bookHeight = parseFloat(document.getElementById('input-height').value);
+            bookWidth = parseFloat(document.getElementById('input-width').value);
+
+            // 高亮自訂按鈕
+            const btnTypes = ['36k', '25k', 'custom'];
+            btnTypes.forEach(tName => {
+                document.getElementById(`btn-size-${tName}`).className = tName === 'custom' 
+                    ? "py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-amber-50 border-amber-500 text-amber-800 shadow-sm"
+                    : "py-2 px-3 text-xs md:text-sm font-medium rounded-lg border transition-all text-center bg-white border-slate-200 text-slate-600 hover:border-slate-300";
+            });
+
+            calculateCapacity();
+        }
+
+        // 選擇展示的擺法
+        function selectMethod(m) {
+            currentMethod = m;
+            calculateCapacity();
+        }
+
+        function calculateCapacity() {
+            // 更新 UI 上顯示的滑桿數值
+            document.getElementById('val-thickness').textContent = bookThickness.toFixed(1);
+            document.getElementById('val-height').textContent = bookHeight.toFixed(1);
+            document.getElementById('val-width').textContent = bookWidth.toFixed(1);
+
+            const gridCount = parseInt(document.getElementById('input-grids').value);
+            document.getElementById('val-grids').textContent = gridCount + ' 格';
+            document.getElementById('grid-count-tag').textContent = gridCount;
+
+            // 讀取手動鍵入的櫃位尺寸
+            const gridW = parseFloat(document.getElementById('input-cab-width').value) || 32;
+            const gridH = parseFloat(document.getElementById('input-cab-height').value) || 32;
+            const cabDepth = parseFloat(document.getElementById('input-cab-depth').value) || 39;
+
+            // 更新視覺化標籤的尺寸字樣
+            document.getElementById('visual-cab-dims').textContent = `${gridW.toFixed(0)} × ${gridH.toFixed(0)}`;
+
+            // 動態縮放視覺化箱子的比例 (以 256px 作為基礎邊長)
+            const visualBox = document.getElementById('visual-box');
+            if (visualBox) {
+                const ratio = gridW / gridH;
+                if (ratio > 1) {
+                    visualBox.style.width = '256px';
+                    visualBox.style.height = `${Math.floor(256 / ratio)}px`;
+                } else {
+                    visualBox.style.height = '256px';
+                    visualBox.style.width = `${Math.floor(256 * ratio)}px`;
+                }
+            }
+
+            // 計算一排直立可放本數
+            const standingPerRow = Math.floor(gridW / bookThickness);
+
+            // 判斷櫃深可容納直立幾排
+            const standingRows = Math.floor(cabDepth / bookWidth);
+            const activeStandingRows = standingRows > 0 ? standingRows : 1; // 至少1排
+
+            // 1. 單排直立擺放
+            const capMethod1 = standingPerRow;
+
+            // 2. 多排直立擺放 (視深度而定)
+            const capMethod2 = standingPerRow * activeStandingRows;
+
+            // 3. 多排直立 + 上方橫放
+            // 剩餘高度
+            const gapH = gridH - bookHeight;
+            let topStackHeight = 0;
+            let topStacksCount = 0;
+            let topStackRows = 1;
+
+            if (gapH >= bookThickness) {
+                topStackHeight = Math.floor(gapH / bookThickness);
+                // 橫躺時，前後深度需大於書本的高度(長度)
+                topStackRows = Math.floor(cabDepth / bookHeight);
+                if (topStackRows === 0) topStackRows = 1; // 深度不夠就只能橫躺1排
+
+                // 寬度能放幾疊橫躺書？書本寬度是 bookWidth
+                const stacksWide = Math.floor(gridW / bookWidth);
+                topStacksCount = topStackHeight * stacksWide * topStackRows;
+            }
+            const capMethod3 = capMethod2 + topStacksCount;
+
+            // 4. 全橫疊平放
+            const totalStacksWide = Math.floor(gridW / bookWidth);
+            const booksPerStack = Math.floor(gridH / bookThickness);
+            const horizontalRows = Math.floor(cabDepth / bookHeight) || 1;
+            const capMethod4 = totalStacksWide * booksPerStack * horizontalRows;
+
+            // 更新四大擺法本數
+            document.getElementById('method-1-count').textContent = `${capMethod1} 本/格`;
+            document.getElementById('method-1-total').textContent = `總計 ${capMethod1 * gridCount} 本`;
+
+            document.getElementById('method-2-count').textContent = `${capMethod2} 本/格`;
+            document.getElementById('method-2-total').textContent = `總計 ${capMethod2 * gridCount} 本`;
+            document.getElementById('desc-method-2').textContent = `完美利用深度，此櫃深可放前後 ${activeStandingRows} 排`;
+
+            document.getElementById('method-3-count').textContent = `${capMethod3} 本/格`;
+            document.getElementById('method-3-total').textContent = `總計 ${capMethod3 * gridCount} 本`;
+            document.getElementById('desc-method-3').textContent = `直立 ${activeStandingRows} 排 + 上方橫壓 ${topStackRows} 排 (${topStacksCount > 0 ? '可放' : '空間不足以疊放'})`;
+
+            document.getElementById('method-4-count').textContent = `${capMethod4} 本/格`;
+            document.getElementById('method-4-total').textContent = `總計 ${capMethod4 * gridCount} 本`;
+            document.getElementById('desc-method-4').textContent = `共 ${totalStacksWide} 疊 × ${booksPerStack} 層 × ${horizontalRows} 排`;
+
+            // 高亮選中列
+            for (let i = 1; i <= 4; i++) {
+                const row = document.getElementById(`row-method-${i}`);
+                if (i === currentMethod) {
+                    row.className = "p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between border-amber-500 bg-amber-50/50";
+                    // 順便把這項當作看板展示
+                    document.getElementById('display-single-cap').textContent = eval(`capMethod${i}`);
+                    document.getElementById('display-total-cap').textContent = eval(`capMethod${i}`) * gridCount;
+                    document.getElementById('visual-tag').textContent = `當前：擺法 ${i}`;
+                } else {
+                    row.className = "p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between hover:bg-slate-50 border-slate-200 bg-white";
+                }
+            }
+
+            // 重量預估
+            const currentCap = parseInt(document.getElementById('display-single-cap').textContent);
+            const weight = (currentCap * 0.17).toFixed(1);
+            document.getElementById('weight-estimation').textContent = weight;
+
+            renderVisualization(standingPerRow, topStackHeight, Math.floor(gridW / bookWidth), totalStacksWide, booksPerStack);
+        }
+
+        // 圖形渲染邏輯
+        function renderVisualization(standingCount, topStackHeight, topStacksWide, totalStacksWide, booksPerStack) {
+            const standingDiv = document.getElementById('box-standing-books');
+            const topDiv = document.getElementById('box-top-stacks');
+            const ruler = document.getElementById('ruler-top');
+
+            // 取得最新的櫃體與書本高度比例
+            const gridH = parseFloat(document.getElementById('input-cab-height').value) || 32;
+
+            // 清空舊圖
+            standingDiv.innerHTML = '';
+            topDiv.innerHTML = '';
+            ruler.classList.add('hidden');
+
+            if (currentMethod === 1 || currentMethod === 2 || currentMethod === 3) {
+                // 渲染直立書本
+                // 限制最多畫 25 本以防破圖
+                const drawCount = Math.min(standingCount, 25);
+                
+                // 計算比例高度 (以視覺箱子的最大高度 256px 作為映射基礎)
+                const bookPixelHeight = Math.min(230, Math.max(50, Math.floor(256 * (bookHeight / gridH))));
+
+                for (let i = 0; i < drawCount; i++) {
+                    const book = document.createElement('div');
+                    // 隨機書脊顏色 (模擬真實視覺)
+                    const colors = ['bg-amber-700', 'bg-amber-600', 'bg-slate-700', 'bg-slate-600', 'bg-sky-800', 'bg-indigo-900', 'bg-emerald-800'];
+                    const randomColor = colors[i % colors.length];
+                    book.className = `${randomColor} rounded-t border-r border-amber-900/40 opacity-90 hover:opacity-100 flex-1 transition-all`;
+                    book.style.height = `${bookPixelHeight}px`;
+
+                    // 第一本書標註厚度示意
+                    if (i === 0) {
+                        book.className += " relative";
+                        book.innerHTML = `<span class="absolute -top-6 left-0 text-[9px] text-slate-500 whitespace-nowrap">${bookThickness}cm</span>`;
+                    }
+                    standingDiv.appendChild(book);
+                }
+            }
+
+            if (currentMethod === 3 && topStackHeight > 0) {
+                // 顯示上方剩餘高度
+                ruler.classList.remove('hidden');
+                ruler.textContent = `上方橫疊：${topStackHeight} 層`;
+
+                // 比例計算橫放書厚度
+                const flatBookPixelHeight = Math.max(6, Math.floor(256 * (bookThickness / gridH)));
+
+                // 渲染上方橫放豆腐塊 (有幾疊就渲染幾疊)
+                for (let s = 0; s < Math.min(topStacksWide, 3); s++) {
+                    const stack = document.createElement('div');
+                    stack.className = "flex flex-col-reverse gap-0.5 w-24";
+                    
+                    for (let h = 0; h < Math.min(topStackHeight, 10); h++) {
+                        const flatBook = document.createElement('div');
+                        flatBook.className = "bg-amber-800/80 w-full rounded border-b border-amber-900/30 text-center text-[8px] text-white flex items-center justify-center font-bold";
+                        flatBook.style.height = `${flatBookPixelHeight}px`;
+                        if (h === 0 && s === 0) flatBook.textContent = "橫放區";
+                        stack.appendChild(flatBook);
+                    }
+                    topDiv.appendChild(stack);
+                }
+            }
+
+            if (currentMethod === 4) {
+                // 全疊放模式
+                ruler.classList.remove('hidden');
+                ruler.textContent = `全平放：${totalStacksWide} 疊`;
+                
+                // 隱藏直立書
+                standingDiv.innerHTML = '';
+
+                // 比例計算橫放書厚度
+                const flatBookPixelHeight = Math.max(6, Math.floor(256 * (bookThickness / gridH)));
+
+                // 在頂部 and 主體空間繪製大豆腐堆
+                for (let s = 0; s < Math.min(totalStacksWide, 3); s++) {
+                    const stack = document.createElement('div');
+                    stack.className = "flex flex-col-reverse gap-0.5 w-28 mx-auto";
+                    
+                    const drawLayers = Math.min(booksPerStack, 20);
+                    for (let h = 0; h < drawLayers; h++) {
+                        const flatBook = document.createElement('div');
+                        flatBook.className = "bg-slate-700 w-full rounded border-b border-slate-900/30";
+                        flatBook.style.height = `${flatBookPixelHeight}px`;
+                        stack.appendChild(flatBook);
+                    }
+                    topDiv.appendChild(stack);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
